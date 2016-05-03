@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xsi:schemaLocation="http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!-- Chain error handler -->
+	<int:chain input-channel="errorChannel" output-channel="responseChannel">
+		<int:service-activator ref="errorHandlerActivator" method="activate" />
+	</int:chain>
+	
+	<int:channel id="responseChannel"/>
+	
+	<!-- gateway -->
+	<int:gateway id="gateway" service-interface="com.sample.integration.routing.gateway.Gateway" default-request-channel="preProscessingChannel"  default-reply-channel="responseChannel" error-channel="errorChannel"/>
+		
+	<!-- chain di preprocessing del messaggio -->
+	<int:chain input-channel="preProscessingChannel" output-channel="routingChannel">
+		<!--
+		<int:service-activator ref="persisterActivator" method="activate" />
+		  -->
+		<int:service-activator ref="validationErrorActivator" method="activate" />
+		<int:transformer ref="payloadExtractor" method="transform"/>
+		
+	</int:chain>
+	
+	
+	<int:payload-type-router input-channel="routingChannel">
+		<int:mapping type="com.sample.integration.routing.domain.GirocontoRequest" channel="girocontoChannel" />
+		<int:mapping type="com.sample.integration.routing.domain.BonificoRequest" channel="bonificoChannel" />
+	</int:payload-type-router>
+	
+	<int:chain input-channel="girocontoChannel" output-channel="responseChannel" >
+		<int:service-activator ref="girocontoActivator" method="activate" />
+	</int:chain>
+	
+	<int:chain input-channel="bonificoChannel" output-channel="responseChannel">
+		<int:service-activator ref="bonificoActivator" method="activate" />
+	</int:chain>
+	
+	<int:chain input-channel="postProcessingChannel" output-channel="responseChannel">
+		<int:service-activator ref="noOperationActivator" method="activate" />
+	</int:chain>
+	
+	
+	<bean id="payloadExtractor" class="com.sample.integration.routing.transformer.PayloadExtractor"/>
+	
+	<bean id="errorHandlerActivator" class="com.sample.integration.common.error.ErrorHandlerActivator"/>
+	<bean id="validationErrorActivator" class="com.sample.integration.routing.activator.ValidationErrorActivator"/>
+	
+	<bean id="girocontoActivator" class="com.sample.integration.routing.activator.GirocontoActivator"/>
+	<bean id="bonificoActivator" class="com.sample.integration.routing.activator.BonificoActivator"/>
+	<bean id="noOperationActivator" class="com.sample.integration.routing.activator.NoOperationActivator"/>
+	
+</beans>

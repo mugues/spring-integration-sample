@@ -26,7 +26,7 @@ public class TestPersistenceContext {
 		employee.setName("Max");
 		employeeRepository.save(employee);
 
-		Employee employee2 = employeeRepository.findOne(1l);
+		Employee employee2 = employeeRepository.findOne(1L);
 
 		assertEquals("Max", employee.getName());
 		assertEquals(employee, employee2);

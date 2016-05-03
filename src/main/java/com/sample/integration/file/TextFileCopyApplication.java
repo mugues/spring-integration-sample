@@ -26,7 +26,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  * @author Mark Fisher
  * @author Marius Bogoevici
  */
-public class TextFileCopyDemo {
+public class TextFileCopyApplication {
 
 	public static void main(String[] args) {
 		ApplicationContext context = new ClassPathXmlApplicationContext("application-context/file-copy-context.xml");
