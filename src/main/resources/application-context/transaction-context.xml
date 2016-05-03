@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc" 
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+	<import resource="classpath*:application-context/persistence-context.xml" />
+
+	<context:component-scan base-package="com.sample"/>
+	
+
+	<!-- Chain error handler -->
+	<int:chain input-channel="errorChannel">
+		<int:service-activator ref="errorHandlerActivator" method="activate" />
+	</int:chain>
+	
+	<!-- gateway -->
+	<int:gateway id="gateway" service-interface="com.sample.integration.transaction.gateway.Gateway" default-request-channel="preProscessingChannel"  />
+	
+	<!-- chain di preprocessing del messaggio -->
+	<int:chain input-channel="preProscessingChannel" >
+		<int:service-activator ref="persisterActivator" method="activate" />
+		<int:service-activator ref="validationErrorActivator" method="activate" />
+	</int:chain>
+	
+	<!-- 
+	<int-jdbc:inbound-channel-adapter id="observerPoller"
+			query="SELECT E.ID FROM EMPLOYEE E WHERE (E.STATE = 'CREATED')"  
+			channel="preProscessingSplitter" 
+			data-source="dataSource" update="UPDATE EMPLOYEE SET STATE = 'PROCESSED' WHERE ID IN (:ID)">
+			<int:poller task-executor="observerPool">
+        		<int:cron-trigger expression="0/30 * * * * ?" />
+   				<int:transactional propagation="REQUIRES_NEW" isolation="DEFAULT" transaction-manager="transactionManager"/>
+    		</int:poller>
+	</int-jdbc:inbound-channel-adapter>
+	<int:splitter input-channel="preProscessingSplitter" output-channel="processingAfterPollerChannel" expression="T(ch.lambdaj.Lambda).extract(payload, T(ch.lambdaj.Lambda).on(T(java.lang.Class).forName('java.util.Map')).get('ID'))"/>
+		
+	<task:executor id="observerPool" pool-size="2"/>
+	 -->
+	
+	<!-- chain di preprocessing del messaggio -->
+	<int:chain input-channel="processingAfterPollerChannel" >
+		<int:transformer ref="employeeLoader" method="transform"/>
+		<int:service-activator ref="employeeUpdateActivator" method="activate" />
+		<int:service-activator ref="validationErrorActivator" method="activate" />
+	</int:chain>
+	
+	<bean id="errorHandlerActivator" class="com.sample.integration.common.error.ErrorHandlerActivator"/>
+	<bean id="persisterActivator" class="com.sample.integration.transaction.activator.PersisterActivator" />
+	<bean id="validationErrorActivator" class="com.sample.integration.transaction.activator.ValidationErrorActivator" />
+	
+	<bean id="employeeLoader" class="com.sample.integration.transaction.activator.EmployeeLoader" />
+	<bean id="employeeUpdateActivator" class="com.sample.integration.transaction.activator.EmployeeUpdateActivator" />
+
+</beans>
