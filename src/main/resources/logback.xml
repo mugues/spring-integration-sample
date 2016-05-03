@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true">
+	<jmxConfigurator/>
+
+    <property name="max.retention.days" value="10" />
+    <property name="default-pattern" value="%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n" />
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level {%thread} [%logger{36}] : %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- 
+	appenders
+	 
+	#note the %X{*} - this is how you fetch data from Mapped Diagnostic Context (MDC)
+	%X{multichannelId} %X{eventType}  %X{eventMessageId}
+	 -->
+
+    <appender name="applicationFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		 <file>application.log</file>
+		<append>true</append>
+        <encoder>
+            <charset>utf-8</charset>            
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${catalina.base}/logs/${jvmRoute}-order-manager.%d{yyyy-MM-dd}.log</fileNamePattern>		
+			<maxHistory>${max.retention.days}</maxHistory>
+		</rollingPolicy>
+	</appender>
+	
+  	
+  	<appender name="frameworksFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		 <file>framework.log</file>
+		<append>true</append>
+        <encoder>
+            <charset>utf-8</charset>            
+            <pattern>%d{HH:mm:ss.SSS} %X{BF-tracing-traceId}, %X{BF-tracing-spanId} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>framework.%d{yyyy-MM-dd}.log</fileNamePattern>		
+			<maxHistory>${max.retention.days}</maxHistory>
+		</rollingPolicy>
+	</appender>
+	
+	<appender name="hibernateFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		 <file>hibernate.log</file>
+		<append>true</append>
+        <encoder>
+            <charset>utf-8</charset>            
+            <pattern>%d{HH:mm:ss.SSS} %X{BF-tracing-traceId}, %X{BF-tracing-spanId} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>eclipse-link.%d{yyyy-MM-dd}.log</fileNamePattern>		
+			<maxHistory>${max.retention.days}</maxHistory>
+		</rollingPolicy>
+	</appender>
+  	
+	
+  	<appender name="AsyncApplicationFileAppender" class="ch.qos.logback.classic.AsyncAppender">
+    	<appender-ref ref="applicationFileAppender" />
+  	</appender>
+  	
+  	<appender name="AsyncFrameworksFileAppender" class="ch.qos.logback.classic.AsyncAppender">
+    	<appender-ref ref="frameworksFileAppender" />
+  	</appender>
+  	
+  	<appender name="AsyncHibernateFileAppender" class="ch.qos.logback.classic.AsyncAppender">
+    	<appender-ref ref="hibernateFileAppender" />
+  	</appender>
+  	
+  	
+    <root level="WARN">
+        <appender-ref ref="CONSOLE" />
+    </root>
+    
+	
+	<property name="application.log.level" value="DEBUG" />
+	
+	<logger name="com.sample" level="${application.log.level}" additivity="false">
+		<appender-ref ref="AsyncApplicationFileAppender" />
+		<appender-ref ref="CONSOLE" />
+	</logger>
+	
+	<logger name="org.springframework" level="${application.log.level}" additivity="false">		
+		<appender-ref ref="AsyncFrameworksFileAppender" />
+		<appender-ref ref="CONSOLE" />
+	</logger>
+
+	<logger name="org.hibernate" level="${application.log.level}" additivity="false">
+		<appender-ref ref="AsyncHibernateFileAppender" />
+		<appender-ref ref="CONSOLE" />
+	</logger>
+
+</configuration>
