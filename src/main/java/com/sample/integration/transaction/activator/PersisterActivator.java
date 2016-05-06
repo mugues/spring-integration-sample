@@ -10,13 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.sample.entity.Employee;
 
+@Transactional(propagation = Propagation.REQUIRED)
 public class PersisterActivator {
 	private final static Logger logger = LoggerFactory.getLogger(PersisterActivator.class);
 
 	@Autowired
 	private EmployeeRepository employeeRepository;
 
-	@Transactional(propagation = Propagation.REQUIRED)
 	public Employee activate(Employee employee) {
 		logger.debug("Persisting employee {}", employee);
 

@@ -14,12 +14,14 @@ public class ValidationErrorActivator {
 	private final static Logger logger = LoggerFactory.getLogger(ValidationErrorActivator.class);
 	
 	
-	public void activate(Employee employee) {
+	public String activate(Employee employee) {
 		logger.debug("Employee name {}", employee.getName());
 
 		if (!"Frank".equals(employee.getName())) {
 			throw new ValidationException("Name not correct , throw assertion error "+ employee.getName());
 		}
+
+		return employee.getName();
 	}
 
 }
