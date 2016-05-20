@@ -9,7 +9,7 @@ import com.sample.integration.jms.gateway.Gateway;
 public class JmsApplication {
 
 	public static void main(String[] args) {
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("application-context/jms-context.xml");
+		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("application-context/jms-jta-context.xml");
 
 		Gateway gateway = (Gateway) context.getBean("gateway");
 

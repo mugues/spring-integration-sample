@@ -11,7 +11,7 @@
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 		http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd">
 
-	<import resource="classpath*:application-context/persistence-context.xml" />
+	<import resource="classpath*:application-context/persistence-jta-context.xml" />
 
 	<context:component-scan base-package="com.sample"/>
 
@@ -24,6 +24,22 @@
 	<!-- gateway -->
 	<int:gateway id="gateway" service-interface="com.sample.integration.jms.gateway.Gateway" default-request-channel="jmsinputchannel"  />
 
+	<!-- xa-connection-factory -->
+	<bean id="connectionFactory" class="org.apache.activemq.ActiveMQXAConnectionFactory">
+		<property name="brokerURL" value="vm://localhost" />
+	</bean>
+
+	<bean id="MessageListenerContainer"  class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="connectionFactory" ref="connectionFactory" />
+		<property name="destinationName" value="requestQueue" />
+		<property name="concurrentConsumers" value="1" />
+		<property name="receiveTimeout" value="3000" />
+		<property name="sessionTransacted" value="true"/>
+	</bean>
+
+
+	<!--
 	<bean id="connectionFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
 		<property name="targetConnectionFactory">
 			<bean class="org.apache.activemq.ActiveMQConnectionFactory">
@@ -32,6 +48,7 @@
 		</property>
 		<property name="sessionCacheSize" value="10"/>
 	</bean>
+	-->
 
 	<bean id="requestQueue" class="org.apache.activemq.command.ActiveMQQueue">
 		<constructor-arg value="queue.demo"/>
